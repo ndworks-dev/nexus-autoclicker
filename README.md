@@ -6,9 +6,17 @@ A small Windows app, written in Rust with a [Slint](https://slint.dev) GUI, that
 
 It is a rewrite of the Python script [wabbajack-autoclicker](https://github.com/nickolasdeluca/wabbajack-autoclicker). It does the same thing, but ships as a single `.exe` with no Python install required.
 
-## Download
+## Install
 
-Get `nexus-autoclicker.exe` from the [latest release](https://github.com/ndworks-dev/nexus-autoclicker/releases/latest) and run it. No install needed: `config.toml` and the `input_images` folder are created next to the executable.
+Open PowerShell and run:
+
+```powershell
+irm https://raw.githubusercontent.com/ndworks-dev/nexus-autoclicker/main/install.ps1 | iex
+```
+
+This installs the latest release for your user (no admin needed) into `%LOCALAPPDATA%\Programs\Nexus Autoclicker`, adds Start Menu and Desktop shortcuts, and opens the app. Run it again to update; your `config.toml` and images are kept. To uninstall, use **Settings > Apps > Installed apps**.
+
+Prefer a portable copy? Download `nexus-autoclicker.exe` from the [latest release](https://github.com/ndworks-dev/nexus-autoclicker/releases/latest) and run it from any folder. `config.toml` and the `input_images` folder are created next to the executable.
 
 ## Disclaimer
 
