@@ -1,0 +1,220 @@
+import { Button, CheckBox, SpinBox, Slider, ListView, GroupBox, VerticalBox, HorizontalBox } from "std-widgets.slint";
+
+export struct ImageItem {
+    name: string,
+    enabled: bool,
+    preview: image,
+}
+
+component SettingRow inherits HorizontalLayout {
+    in property <string> label;
+    spacing: 8px;
+    Text {
+        text: root.label;
+        vertical-alignment: center;
+        horizontal-stretch: 1;
+    }
+    @children
+}
+
+export component AppWindow inherits Window {
+    title: "Nexus Autoclicker";
+    icon: @image-url("../assets/icon.png");
+    preferred-width: 820px;
+    preferred-height: 600px;
+    min-width: 680px;
+    min-height: 480px;
+
+    in-out property <int> max-loops: 99999;
+    in-out property <int> click-interval-ms: 1000;
+    in-out property <int> loop-interval-ms: 3000;
+    in-out property <float> threshold: 0.8;
+    in-out property <bool> minimize-on-start: false;
+
+    in property <bool> running: false;
+    in property <string> status: "Idle";
+    in property <int> iteration: 0;
+    in property <[ImageItem]> images;
+    in property <[string]> log-lines;
+
+    callback start();
+    callback stop();
+    callback add-images();
+    callback open-folder();
+    callback reload-images();
+    callback image-toggled(int, bool);
+    callback clear-log();
+    // Invoked from Rust when the background worker exits.
+    callback worker-finished();
+
+    HorizontalBox {
+        VerticalBox {
+            width: 330px;
+            padding: 0px;
+
+            GroupBox {
+                title: "Settings";
+                enabled: !root.running;
+                VerticalLayout {
+                    spacing: 8px;
+                    SettingRow {
+                        label: "Max iterations";
+                        SpinBox {
+                            width: 130px;
+                            minimum: 1;
+                            maximum: 9999999;
+                            value <=> root.max-loops;
+                        }
+                    }
+                    SettingRow {
+                        label: "Click interval (ms)";
+                        SpinBox {
+                            width: 130px;
+                            minimum: 0;
+                            maximum: 600000;
+                            step-size: 100;
+                            value <=> root.click-interval-ms;
+                        }
+                    }
+                    SettingRow {
+                        label: "Loop interval (ms)";
+                        SpinBox {
+                            width: 130px;
+                            minimum: 0;
+                            maximum: 600000;
+                            step-size: 500;
+                            value <=> root.loop-interval-ms;
+                        }
+                    }
+                    Text {
+                        text: "Match threshold: \{Math.round(root.threshold * 100)}%";
+                    }
+                    Slider {
+                        minimum: 0.3;
+                        maximum: 1.0;
+                        value <=> root.threshold;
+                    }
+                    CheckBox {
+                        text: "Minimize window while running";
+                        checked <=> root.minimize-on-start;
+                    }
+                }
+            }
+
+            GroupBox {
+                title: "Button images";
+                vertical-stretch: 1;
+                VerticalLayout {
+                    spacing: 6px;
+                    ListView {
+                        vertical-stretch: 1;
+                        for item[i] in root.images: HorizontalLayout {
+                            padding: 4px;
+                            spacing: 8px;
+                            height: 52px;
+                            CheckBox {
+                                enabled: !root.running;
+                                checked: item.enabled;
+                                toggled => {
+                                    root.image-toggled(i, self.checked);
+                                }
+                            }
+                            Rectangle {
+                                width: 130px;
+                                background: #00000010;
+                                border-radius: 4px;
+                                Image {
+                                    width: parent.width - 6px;
+                                    height: parent.height - 6px;
+                                    source: item.preview;
+                                    image-fit: contain;
+                                }
+                            }
+                            Text {
+                                text: item.name;
+                                vertical-alignment: center;
+                                overflow: elide;
+                                horizontal-stretch: 1;
+                            }
+                        }
+                    }
+                    HorizontalLayout {
+                        spacing: 6px;
+                        Button {
+                            text: "Add…";
+                            enabled: !root.running;
+                            clicked => { root.add-images(); }
+                        }
+                        Button {
+                            text: "Open folder";
+                            clicked => { root.open-folder(); }
+                        }
+                        Button {
+                            text: "Reload";
+                            enabled: !root.running;
+                            clicked => { root.reload-images(); }
+                        }
+                    }
+                }
+            }
+
+            Button {
+                height: 40px;
+                primary: true;
+                text: root.running ? "Stop (Esc)" : "Start";
+                clicked => {
+                    if (root.running) {
+                        root.stop();
+                    } else {
+                        root.start();
+                    }
+                }
+            }
+        }
+
+        VerticalBox {
+            padding: 0px;
+            HorizontalLayout {
+                spacing: 8px;
+                Rectangle {
+                    width: 12px;
+                    height: 12px;
+                    y: (parent.height - self.height) / 2;
+                    border-radius: 6px;
+                    background: root.running ? #2ea043 : #8b949e;
+                }
+                Text {
+                    text: root.running
+                        ? "\{root.status} · iteration \{root.iteration} of \{root.max-loops}"
+                        : root.status;
+                    vertical-alignment: center;
+                    horizontal-stretch: 1;
+                    overflow: elide;
+                }
+                Button {
+                    text: "Clear log";
+                    clicked => { root.clear-log(); }
+                }
+            }
+            Rectangle {
+                vertical-stretch: 1;
+                border-width: 1px;
+                border-color: #8b949e60;
+                border-radius: 4px;
+                ListView {
+                    for line in root.log-lines: Text {
+                        text: line;
+                        font-family: "Consolas";
+                        font-size: 12px;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+            Text {
+                text: "Newest entries at the top. Hold Esc anywhere to stop.";
+                font-size: 11px;
+                opacity: 0.7;
+            }
+        }
+    }
+}

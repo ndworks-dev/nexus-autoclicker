@@ -1,0 +1,19 @@
+[package]
+name = "nexus-autoclicker"
+version = "1.0.0"
+edition = "2024"
+description = "Clicks the Nexus Mods download buttons for Wabbajack"
+
+[dependencies]
+anyhow = "1.0.104"
+rayon = "1.12.0"
+rfd = "0.18.0"
+serde = { version = "1.0.229", features = ["derive"] }
+slint = "1.18.1"
+toml = "1.2.1"
+windows = { version = "0.62.2", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_HiDpi", "Win32_System_SystemInformation"] }
+xcap = "0.9.8"
+
+[build-dependencies]
+slint-build = "1.18.1"
+winresource = "0.1.34"
